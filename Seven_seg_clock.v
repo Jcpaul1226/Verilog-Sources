@@ -4,33 +4,33 @@
 // Seven segment Display using a clock divider for refresh rate
 //////////////////////////////////////////////////////////////////////////////////
 
-
 module Seven_seg(
         input clk,            //100Mhz clock on fpga
-        input [29:0] num,
+        input [17:0] num,
         output reg [7:0] Anode_Activate,    //Anode signals of 7-segment display
         output reg [6:0] LED_out            //Cathode patterns of 7-segment display
     );
 
 reg[3:0] LED_BCD;
 wire refresh;
-reg [2:0]refrate = 4'b0;
+reg [3:0]refrate = 4'b0;
 
 Clock_divider refresh_rate(
 .clock_in(clk),         //input clock on FPGA
-.divide(26'd200000), //100MHZ/200000 = 500Hz = 500/1s = 1/.002s = 2ms
+.divide(27'd200000), //100MHZ/200000 = 500Hz = 500/1s = 1/.002s = 2ms
+//.divide(27'd02),
 .clock_out(refresh)  //output clock
     );
     
     always @(posedge refresh)
     begin
-    if (refrate == 4'b1000)
+    if (refrate >= 4'b0101)
     refrate = 4'b0000;
     else 
     refrate <= refrate + 4'b01;
     end
     
- //anode activate signals for 4 leds
+ //anode activate signals for 6 leds
  //decoder to generate anode signals
  always @(*)
  begin
@@ -38,42 +38,32 @@ Clock_divider refresh_rate(
     4'b0000: begin
         Anode_Activate = 8'b11111110;
         //activate LED1 and Deactivate LED2, LED3,LED4
-        LED_BCD = num[6:0]%10;
+        LED_BCD = num[3:0];
         end
         4'b0001: begin
         Anode_Activate = 8'b11111101;
         //activate LED2 and Deactivate LED1, LED3,LED4
-        LED_BCD = num[6:0]/10;
+        LED_BCD = num[6:4];
         end
         4'b0010: begin
         Anode_Activate = 8'b11111011;
         //activate LED3 and Deactivate LED2, LED1,LED4
-        LED_BCD = num[13:7]%10;
+        LED_BCD = num[10:7];
         end
         4'b0011: begin
         Anode_Activate = 8'b11110111;
         //activate LED4 and Deactivate LED1, LED2,LED3
-        LED_BCD = num[13:7]/10;
+        LED_BCD = num[13:11];
         end
         4'b0100: begin
         Anode_Activate = 8'b11101111;
         //activate LED1 and Deactivate LED2, LED3,LED4
-        LED_BCD = num[29:14]%10;
+        LED_BCD = num[17:14]%10;
         end
         4'b0101: begin
         Anode_Activate = 8'b11011111;
         //activate LED1 and Deactivate LED2, LED3,LED4
-        LED_BCD = num[29:14]%100/10;
-        end
-        4'b0110: begin
-        Anode_Activate = 8'b10111111;
-        //activate LED1 and Deactivate LED2, LED3,LED4
-        LED_BCD = num[29:14]%1000/100;
-        end
-        4'b0111: begin
-        Anode_Activate = 8'b01111111;
-        //activate LED1 and Deactivate LED2, LED3,LED4
-        LED_BCD = num[29:14]/1000;
+        LED_BCD = num[17:14]/10;
         end
         endcase 
      end
